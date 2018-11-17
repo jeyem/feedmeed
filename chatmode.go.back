@@ -1,0 +1,96 @@
+package main
+
+import (
+	"fmt"
+	"sync"
+
+	"github.com/echo-contrib/pongor"
+	"github.com/labstack/echo"
+	"golang.org/x/net/websocket"
+)
+
+type Post struct {
+	Sender  string `json:"user" form:"user"`
+	Message string `json:"message" form:"message"`
+}
+
+type Feed struct {
+	ID     uint
+	Name   string
+	Reader chan *Post
+}
+
+type FeederCache struct {
+	lastID  uint
+	feeders []*Feed
+	sync.Mutex
+}
+
+func (f *FeederCache) push(feeder *Feed) {
+	f.Lock()
+	defer f.Unlock()
+	f.lastID++
+	feeder.ID = f.lastID
+	f.feeders = append(f.feeders, feeder)
+}
+
+func (f *FeederCache) pull(feederSrc *Feed) {
+	f.Lock()
+	defer f.Unlock()
+	for i, feeder := range f.feeders {
+		if feeder.ID != feederSrc.ID {
+			continue
+		}
+		f.feeders = append(f.feeders[:i], f.feeders[i+1:]...)
+	}
+}
+
+var Feeders = new(FeederCache)
+
+func main() {
+	e := echo.New()
+	r := pongor.GetRenderer(
+		pongor.PongorOption{
+			Reload:    true,
+			Directory: "views",
+		},
+	)
+	e.Renderer = r
+	e.GET("/", index)
+	e.POST("/new", newPost)
+	e.GET("/room", posts)
+	e.Logger.Fatal(e.Start(":5000"))
+}
+
+func index(c echo.Context) error {
+	return c.Render(200, "index.html", echo.Map{})
+}
+
+func newPost(c echo.Context) error {
+	p := new(Post)
+	if err := c.Bind(p); err != nil {
+		return c.JSON(400, echo.Map{"error": err.Error()})
+	}
+	for _, feeder := range Feeders.feeders {
+		feeder.Reader <- p
+	}
+	return c.JSON(200, echo.Map{"message": "successfully"})
+}
+
+func posts(c echo.Context) error {
+	feeder := new(Feed)
+	feeder.Reader = make(chan *Post, 8)
+	Feeders.push(feeder)
+	defer Feeders.pull(feeder)
+	websocket.Handler(func(ws *websocket.Conn) {
+		defer ws.Close()
+		for post := range feeder.Reader {
+			err := websocket.Message.Send(ws, fmt.Sprintf("%s: %s",
+				post.Sender, post.Message))
+			if err != nil {
+				c.Logger().Error(err)
+			}
+		}
+	}).ServeHTTP(c.Response(), c.Request())
+	return nil
+}
