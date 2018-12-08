@@ -1,11 +1,11 @@
 package post
 
 import (
-	"github.com/jeyem/feedmeed/models/post"
+	"github.com/jeyem/feedmeed/models/postmodel"
 	"github.com/labstack/echo"
 )
 
-func miniResponse(p post.Post) echo.Map {
+func miniResponse(p postmodel.Post) echo.Map {
 	return echo.Map{
 		"id":      p.ID,
 		"message": p.Message,

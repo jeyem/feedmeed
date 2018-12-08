@@ -26,6 +26,7 @@ func Login(c echo.Context) error {
 	return c.JSON(200, echo.Map{
 		"message": "login successfully",
 		"token":   t,
+		"user":    miniResponse(u),
 	})
 }
 

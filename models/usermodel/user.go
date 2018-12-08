@@ -15,12 +15,21 @@ type User struct {
 	Nikname  string          `bson:"nikname"`
 	Password string          `bson:"password"`
 	Friends  []bson.ObjectId `bson:"friends"`
+	Created  time.Time       `bson:"created"`
+}
+
+func (u User) DisplayName() string {
+	if u.Nikname != "" {
+		return u.Nikname
+	}
+	return u.Username
 }
 
 func (u *User) Save() error {
 	if u.ID.Valid() {
 		return a.DB.Update(u)
 	}
+	u.Created = time.Now()
 	return a.DB.Create(u)
 }
 
@@ -48,4 +57,14 @@ func (u *User) CreateToken() (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	return token.SignedString([]byte("secret should load from config"))
+}
+
+func (u *User) AddFriend(f *Friend) error {
+	f.Accepted = true
+	if err := f.Save(); err != nil {
+		return err
+	}
+	a.DB.Collection(&User{})
+	u.Friends = append(u.Friends, f.Requester)
+	return u.Save()
 }

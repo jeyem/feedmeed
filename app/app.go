@@ -2,12 +2,16 @@ package app
 
 import (
 	"fmt"
-	"log"
 	"path/filepath"
+	"time"
 
+	mgo "gopkg.in/mgo.v2"
+
+	"github.com/Sirupsen/logrus"
 	"github.com/jeyem/feedmeed/app/config"
 	"github.com/jeyem/mogo"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 )
 
 type App struct {
@@ -21,6 +25,9 @@ func New(c config.Config) *App {
 	a.Config = &c
 	a.DB = a.dbConnection()
 	a.HTTP = echo.New()
+	if a.Config.Debug {
+		a.HTTP.Use(middleware.CORS())
+	}
 	return a
 }
 
@@ -30,13 +37,13 @@ func (a *App) Run() {
 }
 
 func (a *App) dbConnection() *mogo.DB {
-	uri := fmt.Sprintf("%s:%d/%s",
-		a.Config.MongoHost,
-		a.Config.MongoPort,
-		a.Config.MongoDB)
-	db, err := mogo.Conn(uri)
+	db, err := mogo.Conn(&mgo.DialInfo{
+		Addrs:    []string{fmt.Sprintf("%s:%d", a.Config.MongoHost, a.Config.MongoPort)},
+		Timeout:  60 * time.Second,
+		Database: a.Config.MongoDB,
+	})
 	if err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 	return db
 }

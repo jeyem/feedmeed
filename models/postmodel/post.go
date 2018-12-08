@@ -19,6 +19,7 @@ func (p *Post) Save() error {
 	if p.ID.Valid() {
 		return a.DB.Update(p)
 	}
+	p.Created = time.Now()
 	return a.DB.Create(p)
 }
 
