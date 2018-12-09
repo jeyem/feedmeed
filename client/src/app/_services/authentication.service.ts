@@ -25,15 +25,19 @@ export class AuthenticationService {
     return this.http.post<any>(
       `${config.BASE_URL}/api/v1/auth/login`,
       { identifier: username, password: password })
-      .pipe(map(user => {
+      .pipe(map(response => {
         // login successful if there's a jwt token in the response
-        if (user && user.token) {
-          // store user details and jwt token in local storage to keep user logged in between page refreshes
+        if (response && response.token) {
+          let user = new User()
+          user.id = response.user.id;
+          user.username = response.user.username
+          user.displayName = response.user.displayName
+          user.token = response.token
           localStorage.setItem('currentUser', JSON.stringify(user));
           this.currentUserSubject.next(user);
         }
 
-        return user;
+        return response;
       }));
   }
 

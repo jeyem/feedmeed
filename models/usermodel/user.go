@@ -59,12 +59,37 @@ func (u *User) CreateToken() (string, error) {
 	return token.SignedString([]byte("secret should load from config"))
 }
 
-func (u *User) AddFriend(f *Friend) error {
+func (u *User) AddFriend(f *FriendRequest) error {
 	f.Accepted = true
 	if err := f.Save(); err != nil {
 		return err
 	}
-	a.DB.Collection(&User{})
+	if err := a.DB.Collection(&User{}).UpdateId(
+		f.PendingOnUser,
+		bson.M{"$addToSet": bson.M{"friends": u.ID}}); err != nil {
+		return err
+	}
 	u.Friends = append(u.Friends, f.Requester)
 	return u.Save()
+}
+
+func (u *User) FriendRequestsPendingList() (pendings []FriendRequest) {
+
+	a.DB.Find(bson.M{
+		"requester": u.ID, "accepted": false, "rejected": false,
+	}).Load(&pendings)
+	return pendings
+}
+
+func Load(username string) (*User, error) {
+	u := new(User)
+	if err := u.LoadByUsername(username); err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
+func Query(q bson.M) (users []User) {
+	a.DB.Find(q).Load(&users)
+	return users
 }
