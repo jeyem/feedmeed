@@ -55,8 +55,14 @@ func (u *User) CreateToken() (string, error) {
 	claims.ExpiresAt = time.Now().Add(time.Hour * 72).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	return token.SignedString([]byte("secret should load from config"))
+	t, err := token.SignedString([]byte("secret should load from config"))
+	if err != nil {
+		return t, err
+	}
+	if err := NewSession(u, t); err != nil {
+		return t, err
+	}
+	return t, nil
 }
 
 func (u *User) AddFriend(f *FriendRequest) error {
