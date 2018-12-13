@@ -1,13 +1,16 @@
 package usermodel
 
 import (
+	"fmt"
 	"sync"
 	"time"
+
+	"github.com/Sirupsen/logrus"
 
 	"gopkg.in/mgo.v2/bson"
 )
 
-var Connections = new(Sockets)
+var Connections *Sockets
 
 type BroadCaster struct {
 	CasterType string `json:"casterType"`
@@ -26,11 +29,18 @@ type Sockets struct {
 	sync.Mutex
 }
 
+func (b *BroadCaster) Message() string {
+	return fmt.Sprintf("%s:%s", b.CasterType, string(b.Data))
+}
+
 func (s *Sockets) New(c *Socket) {
 	s.Lock()
 	defer s.Unlock()
 	c.lastTime = time.Now().UnixNano()
 	s.interfaces[c.Token] = c
+	if err := MakeOnline(c.ID); err != nil {
+		logrus.Warning(c.ID.Hex(), " status update error")
+	}
 
 }
 

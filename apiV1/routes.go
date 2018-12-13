@@ -23,8 +23,18 @@ func Register(a *app.App) {
 		SigningKey: []byte("secret should load from config"),
 		Claims:     new(usermodel.JwtClaims),
 	}))
+
+	v1.GET("/socket", user.SocketConnect)
+
 	u := r.Group("/user")
 	u.GET("", user.CurrentUser)
+
+	f := u.Group("/friend")
+	f.GET("/:target/add", user.AddFriendRequest)
+	f.GET("/:requester/accept", user.AcceptFriendRequest)
+	f.GET("/:requester/reject", user.RejectFriendRequest)
+	f.GET("/request/list", user.FriendRequests)
+	f.GET("/list", user.FriendList)
 
 	p := r.Group("/post")
 	p.POST("/new", post.New)

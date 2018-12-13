@@ -2,6 +2,9 @@ package usermodel
 
 import (
 	"encoding/json"
+	"errors"
+
+	"github.com/Sirupsen/logrus"
 
 	"gopkg.in/mgo.v2/bson"
 )
@@ -21,6 +24,9 @@ func NewSession(u *User, token string) error {
 	key := []byte(u.ID.Hex())
 	c := new(CacheLayer)
 	data := mdb.Get(key)
+	if err := mdb.Put([]byte(token), []byte(u.ID.Hex())); err != nil {
+		logrus.Warning("token catch failed")
+	}
 
 	if data != nil {
 		if err := json.Unmarshal(data, c); err != nil {
@@ -63,6 +69,14 @@ func UpdateStatus(userID bson.ObjectId, status string) error {
 		return err
 	}
 	return mdb.Put(key, data)
+}
+
+func GetUsernameFromToken(token string) (string, error) {
+	cache := mdb.Get([]byte(token))
+	if cache == nil {
+		return "", errors.New("not found")
+	}
+	return string(cache), nil
 }
 
 func MakeOnline(userID bson.ObjectId) error {

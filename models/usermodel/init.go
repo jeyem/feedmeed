@@ -18,6 +18,7 @@ func Init(application *app.App) {
 		logrus.Fatal(err)
 	}
 	mdb = m
-
+	Connections = new(Sockets)
+	Connections.interfaces = map[string]*Socket{}
 	Connections.gc()
 }
