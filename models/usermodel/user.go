@@ -10,12 +10,13 @@ import (
 )
 
 type User struct {
-	ID       bson.ObjectId   `bson:"_id"`
-	Username string          `bson:"username"`
-	Nikname  string          `bson:"nikname"`
-	Password string          `bson:"password"`
-	Friends  []bson.ObjectId `bson:"friends"`
-	Created  time.Time       `bson:"created"`
+	ID          bson.ObjectId   `bson:"_id"`
+	Username    string          `bson:"username"`
+	Nikname     string          `bson:"nikname"`
+	Password    string          `bson:"password"`
+	ForceStatus bool            `bson:"force_status"`
+	Friends     []bson.ObjectId `bson:"friends"`
+	Created     time.Time       `bson:"created"`
 }
 
 func (u User) DisplayName() string {

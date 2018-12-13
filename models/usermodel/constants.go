@@ -6,3 +6,7 @@ const (
 	Busy         = "busy"
 	DoNotDisturb = "do_not_disturb"
 )
+
+const (
+	FriendOnline = "friend_online"
+)

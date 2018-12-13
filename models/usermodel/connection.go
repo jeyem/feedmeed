@@ -13,8 +13,8 @@ import (
 var Connections *Sockets
 
 type BroadCaster struct {
-	CasterType string `json:"casterType"`
-	Data       []byte `json:"data"`
+	Type string `json:"casterType"`
+	Data []byte `json:"data"`
 }
 
 type Socket struct {
@@ -30,7 +30,7 @@ type Sockets struct {
 }
 
 func (b *BroadCaster) Message() string {
-	return fmt.Sprintf("%s:%s", b.CasterType, string(b.Data))
+	return fmt.Sprintf("%s:%s", b.Type, string(b.Data))
 }
 
 func (s *Sockets) New(c *Socket) {
@@ -41,7 +41,25 @@ func (s *Sockets) New(c *Socket) {
 	if err := MakeOnline(c.ID); err != nil {
 		logrus.Warning(c.ID.Hex(), " status update error")
 	}
+	s.notifyFriends(c)
+}
 
+func (s *Sockets) notifyFriends(c *Socket) {
+	cache, err := LoadFromCache(c.ID)
+	if err != nil {
+
+	}
+	for _, friend := range cache.User.Friends {
+		id := friend.Hex()
+		friendSocket, ok := s.interfaces[id]
+		if !ok {
+			continue
+		}
+		cast := new(BroadCaster)
+		cast.Type = FriendOnline
+		cast.Data = []byte(friend.Hex())
+		friendSocket.Caster <- cast
+	}
 }
 
 func (s *Sockets) Get(token string) *Socket {

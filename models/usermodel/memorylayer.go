@@ -10,11 +10,7 @@ import (
 )
 
 type CacheLayer struct {
-	User struct {
-		Username    string `json:"username"`
-		Nikname     string `json:"nikname"`
-		DisplayName string `json:"displayName"`
-	} `json:"user"`
+	User     User     `json:"user"`
 	Sessions []string `json:"sessions"`
 	IsOnline bool     `json:"is_online"`
 	Status   string   `json:"status"`
@@ -32,8 +28,7 @@ func NewSession(u *User, token string) error {
 		if err := json.Unmarshal(data, c); err != nil {
 			return err
 		}
-		c.User.Nikname = u.Nikname
-		c.User.DisplayName = u.DisplayName()
+		c.User = *u
 		c.Sessions = append(c.Sessions, token)
 		data, err := json.Marshal(c)
 		if err != nil {
@@ -53,6 +48,18 @@ func NewSession(u *User, token string) error {
 		return err
 	}
 	return mdb.Put(key, data)
+}
+
+func LoadFromCache(userID bson.ObjectId) (*CacheLayer, error) {
+	cache := new(CacheLayer)
+	data := mdb.Get([]byte(userID.Hex()))
+	if data != nil {
+		return nil, errors.New("not found")
+	}
+	if err := json.Unmarshal(data, cache); err != nil {
+		return nil, err
+	}
+	return cache, nil
 }
 
 func UpdateStatus(userID bson.ObjectId, status string) error {
@@ -87,7 +94,6 @@ func MakeOnline(userID bson.ObjectId) error {
 		return err
 	}
 	c.IsOnline = true
-
 	data, err := json.Marshal(c)
 	if err != nil {
 		return err
