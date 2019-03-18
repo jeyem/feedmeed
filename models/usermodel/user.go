@@ -6,17 +6,19 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/jeyem/passwd"
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
 type User struct {
-	ID          bson.ObjectId   `bson:"_id"`
-	Username    string          `bson:"username"`
-	Nikname     string          `bson:"nikname"`
-	Password    string          `bson:"password"`
-	ForceStatus bool            `bson:"force_status"`
-	Friends     []bson.ObjectId `bson:"friends"`
-	Created     time.Time       `bson:"created"`
+	ID          bson.ObjectId `bson:"_id" json:"_id"`
+	Username    string        `bson:"username" json:"username"`
+	Nikname     string        `bson:"nikname" json:"nikname"`
+	Password    string        `bson:"password" json:"-"`
+	ForceStatus bool          `bson:"force_status" json:"force_status"`
+	Followers   int           `bson:"followers"`
+	Followings  int           `bson:"followings"`
+	Created     time.Time     `bson:"created" json:"created"`
 }
 
 func (u User) DisplayName() string {
@@ -24,6 +26,12 @@ func (u User) DisplayName() string {
 		return u.Nikname
 	}
 	return u.Username
+}
+
+func (u *User) Meta() []mgo.Index {
+	return []mgo.Index{
+		{Key: []string{"username"}, Unique: true},
+	}
 }
 
 func (u *User) Save() error {
@@ -60,32 +68,55 @@ func (u *User) CreateToken() (string, error) {
 	if err != nil {
 		return t, err
 	}
-	if err := NewSession(u, t); err != nil {
+	if err := NewCache(u, t, ""); err != nil {
 		return t, err
 	}
 	return t, nil
 }
 
-func (u *User) AddFriend(f *FriendRequest) error {
-	f.Accepted = true
-	if err := f.Save(); err != nil {
+func (u *User) Follow(target *User) error {
+	target.Followers++
+	if err := target.Save(); err != nil {
 		return err
 	}
-	if err := a.DB.Collection(&User{}).UpdateId(
-		f.PendingOnUser,
-		bson.M{"$addToSet": bson.M{"friends": u.ID}}); err != nil {
+	u.Followings++
+	if err := u.Save(); err != nil {
 		return err
 	}
-	u.Friends = append(u.Friends, f.Requester)
-	return u.Save()
+	r := Relation{
+		Follower:  u.ID,
+		Following: target.ID,
+		Status:    follow,
+	}
+	return r.Save()
 }
 
-func (u *User) FriendRequestsPendingList() (pendings []FriendRequest) {
-
+func (u *User) FollowersObjs(page, limit int) (users []User) {
+	relations := []Relation{}
 	a.DB.Find(bson.M{
-		"requester": u.ID, "accepted": false, "rejected": false,
-	}).Load(&pendings)
-	return pendings
+		"following": u.ID,
+		"status":    follow,
+	}).Load(&relations)
+	var ids []bson.ObjectId
+	for _, r := range relations {
+		ids = append(ids, r.Follower)
+	}
+	a.DB.Find(bson.M{"_id": bson.M{"$in": ids}}).Load(&users)
+	return users
+}
+
+func (u *User) FollowingsObjs(page, limit int) (users []User) {
+	relations := []Relation{}
+	a.DB.Find(bson.M{
+		"follower": u.ID,
+		"status":   follow,
+	}).Load(&relations)
+	var ids []bson.ObjectId
+	for _, r := range relations {
+		ids = append(ids, r.Following)
+	}
+	a.DB.Find(bson.M{"_id": bson.M{"$in": ids}}).Load(&users)
+	return users
 }
 
 func Load(username string) (*User, error) {
@@ -98,5 +129,10 @@ func Load(username string) (*User, error) {
 
 func Query(q bson.M) (users []User) {
 	a.DB.Find(q).Load(&users)
+	return users
+}
+
+func Search(query string) (users []User) {
+	a.DB.Find(bson.M{"$text": bson.M{"$search": query}}).Load(&users)
 	return users
 }

@@ -1,11 +1,11 @@
 package usermodel
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
-
-	"github.com/Sirupsen/logrus"
 
 	"gopkg.in/mgo.v2/bson"
 )
@@ -29,6 +29,33 @@ type Sockets struct {
 	sync.Mutex
 }
 
+func CastByID(userID bson.ObjectId, castType string, v interface{}) error {
+	sessions, err := GetSessions(userID)
+	if err != nil {
+		return err
+	}
+	for _, sess := range sessions.Access {
+		CastByToken(sess.Token, castType, v)
+	}
+	return nil
+}
+
+func CastByToken(token, castType string, v interface{}) error {
+	socket := Connections.Get(token)
+	if socket == nil {
+		return errors.New("there is no live connection")
+	}
+	data, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	c := new(BroadCaster)
+	c.Type = castType
+	c.Data = data
+	socket.Caster <- c
+	return nil
+}
+
 func (b *BroadCaster) Message() string {
 	return fmt.Sprintf("%s:%s", b.Type, string(b.Data))
 }
@@ -38,28 +65,6 @@ func (s *Sockets) New(c *Socket) {
 	defer s.Unlock()
 	c.lastTime = time.Now().UnixNano()
 	s.interfaces[c.Token] = c
-	if err := MakeOnline(c.ID); err != nil {
-		logrus.Warning(c.ID.Hex(), " status update error")
-	}
-	s.notifyFriends(c)
-}
-
-func (s *Sockets) notifyFriends(c *Socket) {
-	cache, err := LoadFromCache(c.ID)
-	if err != nil {
-
-	}
-	for _, friend := range cache.User.Friends {
-		id := friend.Hex()
-		friendSocket, ok := s.interfaces[id]
-		if !ok {
-			continue
-		}
-		cast := new(BroadCaster)
-		cast.Type = FriendOnline
-		cast.Data = []byte(friend.Hex())
-		friendSocket.Caster <- cast
-	}
 }
 
 func (s *Sockets) Get(token string) *Socket {

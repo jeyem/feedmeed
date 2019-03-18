@@ -33,6 +33,8 @@ export class AuthenticationService {
           user.username = response.user.username
           user.displayName = response.user.displayName
           user.token = response.token
+          user.followers = response.user.followers
+          user.followings = response.user.followings
           localStorage.setItem('currentUser', JSON.stringify(user));
           this.currentUserSubject.next(user);
         }

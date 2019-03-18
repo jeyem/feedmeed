@@ -7,18 +7,32 @@ import (
 )
 
 var (
-	a   *app.App
-	mdb *bolt.Bucket
+	a           *app.App
+	userBucket  *bolt.Bucket
+	tokenBucket *bolt.Bucket
 )
 
 func Init(application *app.App) {
 	a = application
-	m, err := a.MDB.CreateBucketIfNotExists([]byte("users"))
+
+	// users cache
+	ub, err := a.MDB.CreateBucketIfNotExists([]byte("users"))
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	mdb = m
+	userBucket = ub
+
+	// tokens cache
+	tb, err := a.MDB.CreateBucketIfNotExists([]byte("tokens"))
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	tokenBucket = tb
+
 	Connections = new(Sockets)
 	Connections.interfaces = map[string]*Socket{}
+
+	// sockets garbage collector
 	Connections.gc()
+	a.DB.LoadIndexes(&User{})
 }

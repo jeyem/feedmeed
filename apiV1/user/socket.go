@@ -5,7 +5,6 @@ import (
 	"github.com/jeyem/feedmeed/models/usermodel"
 	"github.com/labstack/echo"
 	"golang.org/x/net/websocket"
-	"gopkg.in/mgo.v2/bson"
 )
 
 func SocketConnect(c echo.Context) error {
@@ -18,15 +17,16 @@ func SocketConnect(c echo.Context) error {
 			ws.Close()
 			return
 		}
-		id, err := usermodel.GetUsernameFromToken(token)
+		user, err := usermodel.LoadByToken(token)
 		if err != nil {
 			logrus.Warning("failed load token from cache")
+			logrus.Error(err)
 			ws.Close()
 			return
 		}
-
+		logrus.Info(user.Username, " logged in success!!")
 		socket := &usermodel.Socket{
-			ID:     bson.ObjectIdHex(id),
+			ID:     user.ID,
 			Token:  token,
 			Caster: make(chan *usermodel.BroadCaster, 8),
 		}

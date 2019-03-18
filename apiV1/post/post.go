@@ -18,8 +18,8 @@ func New(c echo.Context) error {
 			"error": err.Error(),
 		})
 	}
-	p := postmodel.New(user.ID, f.Message, f.IsPrivate)
-	if err := p.Save(); err != nil {
+	p, err := postmodel.New(user.ID, f.Message)
+	if err != nil {
 		return c.JSON(400, echo.Map{"error": err.Error()})
 	}
 	return c.JSON(200, echo.Map{
@@ -28,16 +28,49 @@ func New(c echo.Context) error {
 	})
 }
 
-func List(c echo.Context) error {
-	posts, err := postmodel.Find(bson.M{})
+func Timeline(c echo.Context) error {
+	user, err := usermodel.LoadByRequest(c)
 	if err != nil {
-		return c.JSON(400, echo.Map{"error": err.Error()})
+		return c.JSON(400, echo.Map{
+			"error": err.Error(),
+		})
 	}
+	page := 1
+	limit := 100
+	posts := postmodel.LoadTimeLine(user.ID, page, limit)
+
+	response := []echo.Map{}
+
+	for _, p := range posts {
+		response = append(response, miniResponse(p))
+	}
+
+	return c.JSON(200, bson.M{
+		"posts": response,
+		"page":  page,
+		"limit": limit,
+	})
+}
+
+func SelfPosts(c echo.Context) error {
+	user, err := usermodel.LoadByRequest(c)
+	if err != nil {
+		return c.JSON(400, echo.Map{
+			"error": err.Error(),
+		})
+	}
+
+	page := 1
+	limit := 100
+
+	posts := postmodel.SelfPosts(user.ID, page, limit)
 	response := []echo.Map{}
 	for _, p := range posts {
 		response = append(response, miniResponse(p))
 	}
 	return c.JSON(200, echo.Map{
+		"page":  page,
+		"limit": limit,
 		"posts": posts,
 	})
 }

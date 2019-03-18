@@ -10,5 +10,7 @@ func miniResponse(u *usermodel.User) echo.Map {
 		"id":          u.ID,
 		"username":    u.Username,
 		"displayName": u.DisplayName(),
+		"followers":   u.Followers,
+		"followings":  u.Followings,
 	}
 }

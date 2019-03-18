@@ -9,5 +9,6 @@ func miniResponse(p postmodel.Post) echo.Map {
 	return echo.Map{
 		"id":      p.ID,
 		"message": p.Message,
+		"hashes":  p.Hashes,
 	}
 }

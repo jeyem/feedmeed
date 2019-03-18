@@ -3,7 +3,6 @@ package app
 import (
 	"fmt"
 	"path/filepath"
-	"time"
 
 	mgo "gopkg.in/mgo.v2"
 
@@ -35,6 +34,7 @@ func New(c config.Config) *App {
 }
 
 func (a *App) Run() {
+	a.HTTP.Use(middleware.Logger())
 	a.HTTP.Static("static", filepath.Join(a.Config.Views, "static"))
 	a.HTTP.Logger.Fatal(a.HTTP.Start(fmt.Sprintf(":%d", a.Config.Port)))
 }
@@ -54,9 +54,9 @@ func (a *App) memorydbConnection() *bolt.Tx {
 func (a *App) dbConnection() *mogo.DB {
 	db, err := mogo.Conn(&mgo.DialInfo{
 		Addrs:    []string{fmt.Sprintf("%s:%d", a.Config.MongoHost, a.Config.MongoPort)},
-		Timeout:  60 * time.Second,
 		Database: a.Config.MongoDB,
 	})
+
 	if err != nil {
 		logrus.Fatal(err)
 	}

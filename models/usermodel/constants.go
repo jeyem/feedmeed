@@ -10,3 +10,10 @@ const (
 const (
 	FriendOnline = "friend_online"
 )
+
+const (
+	pending = "pending"
+	rejects = "rejected"
+	ban     = "banned"
+	follow  = "follow"
+)
