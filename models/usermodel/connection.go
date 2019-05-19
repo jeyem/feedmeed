@@ -30,11 +30,8 @@ type Sockets struct {
 }
 
 func CastByID(userID bson.ObjectId, castType string, v interface{}) error {
-	sessions, err := GetSessions(userID)
-	if err != nil {
-		return err
-	}
-	for _, sess := range sessions.Access {
+	sessions := GetSessions(userID)
+	for _, sess := range sessions {
 		CastByToken(sess.Token, castType, v)
 	}
 	return nil

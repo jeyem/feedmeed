@@ -30,7 +30,7 @@ func New(sender bson.ObjectId, message string) (*Post, error) {
 	if err := p.Save(); err != nil {
 		return nil, err
 	}
-	WriteTimeLines(sender, p)
+	// WriteTimeLines(sender, p)
 	return p, nil
 }
 

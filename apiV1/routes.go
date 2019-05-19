@@ -2,7 +2,6 @@ package apiV1
 
 import (
 	"github.com/jeyem/feedmeed/apiV1/post"
-	"github.com/jeyem/feedmeed/apiV1/search"
 	"github.com/jeyem/feedmeed/apiV1/user"
 	"github.com/jeyem/feedmeed/app"
 	"github.com/jeyem/feedmeed/models"
@@ -15,7 +14,7 @@ func Register(a *app.App) {
 	models.RegisterAllModels(a)
 
 	v1 := a.HTTP.Group("/api/v1")
-
+	v1.GET("/socket", SocketConnect)
 	v1.POST("/auth/login", user.Login)
 	v1.POST("/auth/register", user.Register)
 
@@ -24,8 +23,6 @@ func Register(a *app.App) {
 		SigningKey: []byte("secret should load from config"),
 		Claims:     new(usermodel.JwtClaims),
 	}))
-
-	v1.GET("/socket", user.SocketConnect)
 
 	u := r.Group("/user")
 	u.GET("", user.CurrentUser)
@@ -41,8 +38,5 @@ func Register(a *app.App) {
 	p := r.Group("/post")
 	p.POST("/new", post.New)
 	p.GET("/self", post.SelfPosts)
-
-	s := r.Group("/search")
-	s.GET("", search.Search)
 
 }

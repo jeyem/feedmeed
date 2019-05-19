@@ -1,4 +1,4 @@
-package user
+package apiV1
 
 import (
 	"github.com/Sirupsen/logrus"

@@ -6,6 +6,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/jeyem/passwd"
+	"github.com/labstack/echo"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -57,7 +58,7 @@ func (u *User) AuthByUsername(username, password string) error {
 	return nil
 }
 
-func (u *User) CreateToken() (string, error) {
+func (u *User) CreateToken(c echo.Context) (string, error) {
 
 	claims := new(JwtClaims)
 	claims.Username = u.Username
@@ -68,56 +69,56 @@ func (u *User) CreateToken() (string, error) {
 	if err != nil {
 		return t, err
 	}
-	if err := NewCache(u, t, ""); err != nil {
+	if err := CreateSession(c, u.ID, t); err != nil {
 		return t, err
 	}
 	return t, nil
 }
 
-func (u *User) Follow(target *User) error {
-	target.Followers++
-	if err := target.Save(); err != nil {
-		return err
-	}
-	u.Followings++
-	if err := u.Save(); err != nil {
-		return err
-	}
-	r := Relation{
-		Follower:  u.ID,
-		Following: target.ID,
-		Status:    follow,
-	}
-	return r.Save()
-}
+// func (u *User) Follow(target *User) error {
+// 	target.Followers++
+// 	if err := target.Save(); err != nil {
+// 		return err
+// 	}
+// 	u.Followings++
+// 	if err := u.Save(); err != nil {
+// 		return err
+// 	}
+// 	r := Relation{
+// 		Follower:  u.ID,
+// 		Following: target.ID,
+// 		Status:    follow,
+// 	}
+// 	return r.Save()
+// }
 
-func (u *User) FollowersObjs(page, limit int) (users []User) {
-	relations := []Relation{}
-	a.DB.Find(bson.M{
-		"following": u.ID,
-		"status":    follow,
-	}).Load(&relations)
-	var ids []bson.ObjectId
-	for _, r := range relations {
-		ids = append(ids, r.Follower)
-	}
-	a.DB.Find(bson.M{"_id": bson.M{"$in": ids}}).Load(&users)
-	return users
-}
+// func (u *User) FollowersObjs(page, limit int) (users []User) {
+// 	relations := []Relation{}
+// 	a.DB.Find(bson.M{
+// 		"following": u.ID,
+// 		"status":    follow,
+// 	}).Load(&relations)
+// 	var ids []bson.ObjectId
+// 	for _, r := range relations {
+// 		ids = append(ids, r.Follower)
+// 	}
+// 	a.DB.Find(bson.M{"_id": bson.M{"$in": ids}}).Load(&users)
+// 	return users
+// }
 
-func (u *User) FollowingsObjs(page, limit int) (users []User) {
-	relations := []Relation{}
-	a.DB.Find(bson.M{
-		"follower": u.ID,
-		"status":   follow,
-	}).Load(&relations)
-	var ids []bson.ObjectId
-	for _, r := range relations {
-		ids = append(ids, r.Following)
-	}
-	a.DB.Find(bson.M{"_id": bson.M{"$in": ids}}).Load(&users)
-	return users
-}
+// func (u *User) FollowingsObjs(page, limit int) (users []User) {
+// 	relations := []Relation{}
+// 	a.DB.Find(bson.M{
+// 		"follower": u.ID,
+// 		"status":   follow,
+// 	}).Load(&relations)
+// 	var ids []bson.ObjectId
+// 	for _, r := range relations {
+// 		ids = append(ids, r.Following)
+// 	}
+// 	a.DB.Find(bson.M{"_id": bson.M{"$in": ids}}).Load(&users)
+// 	return users
+// }
 
 func Load(username string) (*User, error) {
 	u := new(User)

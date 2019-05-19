@@ -19,7 +19,7 @@ func Login(c echo.Context) error {
 	if err := u.AuthByUsername(form.Identifier, form.Password); err != nil {
 		return c.JSON(400, echo.Map{"error": err.Error()})
 	}
-	t, err := u.CreateToken()
+	t, err := u.CreateToken(c)
 	if err != nil {
 		return c.JSON(400, echo.Map{"error": err.Error()})
 	}
@@ -45,7 +45,7 @@ func Register(c echo.Context) error {
 	if err := u.Save(); err != nil {
 		return c.JSON(400, echo.Map{"error": err.Error()})
 	}
-	t, err := u.CreateToken()
+	t, err := u.CreateToken(c)
 	if err != nil {
 		return c.JSON(400, echo.Map{"error": err.Error()})
 	}
