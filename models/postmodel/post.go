@@ -3,6 +3,8 @@ package postmodel
 import (
 	"time"
 
+	"github.com/jeyem/feedmeed/models/usermodel"
+
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -22,19 +24,20 @@ func (p *Post) Save() error {
 	return a.DB.Create(p)
 }
 
-func New(sender bson.ObjectId, message string) (*Post, error) {
+func New(sender *usermodel.User, message string) (*Post, error) {
 	p := new(Post)
-	p.Sender = sender
+	p.Sender = sender.ID
 	p.Message = message
 	p.Hashes = HashParser(message)
 	if err := p.Save(); err != nil {
 		return nil, err
 	}
-	// WriteTimeLines(sender, p)
+	PushTimeline(p, sender)
 	return p, nil
 }
 
 func SelfPosts(sender bson.ObjectId, page, limit int) (posts []Post) {
+	// TODO: fix pagination
 	a.DB.Find(bson.M{
 		"sender": sender,
 	}).Load(&posts)

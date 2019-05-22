@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Sirupsen/logrus"
+
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -29,12 +31,13 @@ type Sockets struct {
 	sync.Mutex
 }
 
-func CastByID(userID bson.ObjectId, castType string, v interface{}) error {
+func CastByID(userID bson.ObjectId, castType string, v interface{}) {
 	sessions := GetSessions(userID)
 	for _, sess := range sessions {
-		CastByToken(sess.Token, castType, v)
+		if err := CastByToken(sess.Token, castType, v); err != nil {
+			logrus.Warn("casting token -->", err)
+		}
 	}
-	return nil
 }
 
 func CastByToken(token, castType string, v interface{}) error {

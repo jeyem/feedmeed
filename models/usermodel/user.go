@@ -75,50 +75,57 @@ func (u *User) CreateToken(c echo.Context) (string, error) {
 	return t, nil
 }
 
-// func (u *User) Follow(target *User) error {
-// 	target.Followers++
-// 	if err := target.Save(); err != nil {
-// 		return err
-// 	}
-// 	u.Followings++
-// 	if err := u.Save(); err != nil {
-// 		return err
-// 	}
-// 	r := Relation{
-// 		Follower:  u.ID,
-// 		Following: target.ID,
-// 		Status:    follow,
-// 	}
-// 	return r.Save()
-// }
+func (u *User) Follow(target *User) error {
+	target.Followers++
+	if err := target.Save(); err != nil {
+		return err
+	}
+	u.Followings++
+	if err := u.Save(); err != nil {
+		return err
+	}
+	r := Relation{
+		Follower:  u.ID,
+		Following: target.ID,
+		Status:    follow,
+	}
+	return r.Save()
+}
 
-// func (u *User) FollowersObjs(page, limit int) (users []User) {
-// 	relations := []Relation{}
-// 	a.DB.Find(bson.M{
-// 		"following": u.ID,
-// 		"status":    follow,
-// 	}).Load(&relations)
-// 	var ids []bson.ObjectId
-// 	for _, r := range relations {
-// 		ids = append(ids, r.Follower)
-// 	}
-// 	a.DB.Find(bson.M{"_id": bson.M{"$in": ids}}).Load(&users)
-// 	return users
-// }
+func (u *User) StreamFollowersObjs() *mgo.Iter {
+	return a.DB.Collection(&User{}).Find(bson.M{
+		"following": u.ID,
+		"status":    follow,
+	}).Iter()
+}
 
-// func (u *User) FollowingsObjs(page, limit int) (users []User) {
-// 	relations := []Relation{}
-// 	a.DB.Find(bson.M{
-// 		"follower": u.ID,
-// 		"status":   follow,
-// 	}).Load(&relations)
-// 	var ids []bson.ObjectId
-// 	for _, r := range relations {
-// 		ids = append(ids, r.Following)
-// 	}
-// 	a.DB.Find(bson.M{"_id": bson.M{"$in": ids}}).Load(&users)
-// 	return users
-// }
+func (u *User) FollowersObjs(page, limit int) (users []User) {
+	relations := []Relation{}
+	a.DB.Find(bson.M{
+		"following": u.ID,
+		"status":    follow,
+	}).Load(&relations)
+	var ids []bson.ObjectId
+	for _, r := range relations {
+		ids = append(ids, r.Follower)
+	}
+	a.DB.Find(bson.M{"_id": bson.M{"$in": ids}}).Load(&users)
+	return users
+}
+
+func (u *User) FollowingsObjs(page, limit int) (users []User) {
+	relations := []Relation{}
+	a.DB.Find(bson.M{
+		"follower": u.ID,
+		"status":   follow,
+	}).Load(&relations)
+	var ids []bson.ObjectId
+	for _, r := range relations {
+		ids = append(ids, r.Following)
+	}
+	a.DB.Find(bson.M{"_id": bson.M{"$in": ids}}).Load(&users)
+	return users
+}
 
 func Load(username string) (*User, error) {
 	u := new(User)

@@ -12,3 +12,12 @@ func miniResponse(p postmodel.Post) echo.Map {
 		"hashes":  p.Hashes,
 	}
 }
+
+func miniResponseTimeline(t postmodel.Timeline) echo.Map {
+	return echo.Map{
+		"id":      t.ID,
+		"post":    miniResponse(t.Post),
+		"seen":    t.Seen,
+		"created": t.Created,
+	}
+}

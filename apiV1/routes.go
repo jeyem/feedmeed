@@ -18,21 +18,21 @@ func Register(a *app.App) {
 	v1.POST("/auth/login", user.Login)
 	v1.POST("/auth/register", user.Register)
 
-	r := v1.Group("/r")
+	r := v1.Group("/")
 	r.Use(middleware.JWTWithConfig(middleware.JWTConfig{
 		SigningKey: []byte("secret should load from config"),
 		Claims:     new(usermodel.JwtClaims),
 	}))
 
-	u := r.Group("/user")
+	u := r.Group("user")
 	u.GET("", user.CurrentUser)
 
-	f := r.Group("/follow")
-	f.PUT("/:target", user.FollowRequest)
-	f.GET("/ers", user.FollowersList)
-	f.GET("/ings", user.FollowingsList)
+	f := r.Group("follow")
+	f.PUT("/:target", user.Follow)
+	f.GET("/ers", user.FollowerList)
+	f.GET("/ings", user.FollowingList)
 
-	t := r.Group("/timeline")
+	t := r.Group("timeline")
 	t.GET("", post.Timeline)
 
 	p := r.Group("/post")

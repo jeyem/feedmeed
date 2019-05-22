@@ -18,7 +18,7 @@ func New(c echo.Context) error {
 			"error": err.Error(),
 		})
 	}
-	p, err := postmodel.New(user.ID, f.Message)
+	p, err := postmodel.New(user, f.Message)
 	if err != nil {
 		return c.JSON(400, echo.Map{"error": err.Error()})
 	}
@@ -37,12 +37,12 @@ func Timeline(c echo.Context) error {
 	}
 	page := 1
 	limit := 100
-	posts := postmodel.LoadTimeLine(user.ID, page, limit)
+	timeline := postmodel.LoadTimeline(user.ID, page, limit)
 
 	response := []echo.Map{}
 
-	for _, p := range posts {
-		response = append(response, miniResponse(p))
+	for _, item := range timeline {
+		response = append(response, miniResponseTimeline(item))
 	}
 
 	return c.JSON(200, bson.M{
