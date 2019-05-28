@@ -32,15 +32,20 @@ func PushTimeline(p *Post, u *usermodel.User) chan bool {
 	doneSignal := make(chan bool, 1)
 	go func() {
 		iter := u.StreamFollowersObjs()
-		follower := new(usermodel.User)
-		for iter.Next(follower) {
+		relation := new(usermodel.Relation)
+		lastID := ""
+		for iter.Next(relation) {
+			if relation.ID.Hex() == lastID {
+				continue
+			}
+			lastID = relation.ID.Hex()
 			t := new(Timeline)
-			t.User = follower.ID
+			t.User = relation.Follower
 			t.Post = *p
 			if err := t.Save(); err != nil {
 				logrus.Error("on pushing timeline -->", err)
 			}
-			usermodel.CastByID(follower.ID, "timeline", t)
+			usermodel.CastByID(relation.Follower, "timeline", t)
 		}
 		doneSignal <- true
 	}()

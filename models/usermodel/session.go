@@ -26,9 +26,9 @@ func GetSessions(userID bson.ObjectId) (sessions []Session) {
 	return sessions
 }
 
-func CreateSession(c echo.Context, userID bson.ObjectId, token string) error {
+func CreateSession(c echo.Context, u *User, token string) error {
 	sess := new(Session)
-	sess.User = userID
+	sess.User = u.ID
 	sess.Token = token
 	return sess.Save()
 }

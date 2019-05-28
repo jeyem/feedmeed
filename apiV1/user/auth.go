@@ -23,6 +23,7 @@ func Login(c echo.Context) error {
 	if err != nil {
 		return c.JSON(400, echo.Map{"error": err.Error()})
 	}
+
 	return c.JSON(200, echo.Map{
 		"message": "login successfully",
 		"token":   t,

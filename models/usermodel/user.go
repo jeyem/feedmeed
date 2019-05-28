@@ -69,7 +69,7 @@ func (u *User) CreateToken(c echo.Context) (string, error) {
 	if err != nil {
 		return t, err
 	}
-	if err := CreateSession(c, u.ID, t); err != nil {
+	if err := CreateSession(c, u, t); err != nil {
 		return t, err
 	}
 	return t, nil
@@ -93,17 +93,17 @@ func (u *User) Follow(target *User) error {
 }
 
 func (u *User) StreamFollowersObjs() *mgo.Iter {
-	return a.DB.Collection(&User{}).Find(bson.M{
-		"following": u.ID,
-		"status":    follow,
+	return a.DB.Collection(&Relation{}).Find(bson.M{
+		"_following": u.ID,
+		"status":     follow,
 	}).Iter()
 }
 
 func (u *User) FollowersObjs(page, limit int) (users []User) {
 	relations := []Relation{}
 	a.DB.Find(bson.M{
-		"following": u.ID,
-		"status":    follow,
+		"_following": u.ID,
+		"status":     follow,
 	}).Load(&relations)
 	var ids []bson.ObjectId
 	for _, r := range relations {
@@ -116,8 +116,8 @@ func (u *User) FollowersObjs(page, limit int) (users []User) {
 func (u *User) FollowingsObjs(page, limit int) (users []User) {
 	relations := []Relation{}
 	a.DB.Find(bson.M{
-		"follower": u.ID,
-		"status":   follow,
+		"_follower": u.ID,
+		"status":    follow,
 	}).Load(&relations)
 	var ids []bson.ObjectId
 	for _, r := range relations {

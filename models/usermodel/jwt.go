@@ -1,7 +1,7 @@
 package usermodel
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -26,12 +26,13 @@ func LoadByRequest(c echo.Context) (*User, error) {
 func LoadByToken(tokenStr string) (*User, error) {
 	token, _ := jwt.ParseWithClaims(tokenStr, &JwtClaims{}, func(token *jwt.Token) (interface{}, error) {
 		claims := token.Claims.(*JwtClaims)
-		fmt.Println("---------", claims.Username)
 		return claims, nil
 	})
 	u := new(User)
-	claims := token.Claims.(*JwtClaims)
-	fmt.Println(claims.Username, "---------*****")
+	claims, ok := token.Claims.(*JwtClaims)
+	if !ok {
+		return nil, errors.New("converting token failed")
+	}
 
 	if err := u.LoadByUsername(claims.Username); err != nil {
 		return nil, err

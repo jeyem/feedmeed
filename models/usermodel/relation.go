@@ -15,5 +15,6 @@ type Relation struct {
 }
 
 func (r *Relation) Save() error {
+	r.Created = time.Now()
 	return a.DB.Create(r)
 }

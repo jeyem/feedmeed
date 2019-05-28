@@ -35,8 +35,8 @@ func Register(a *app.App) {
 	t := r.Group("timeline")
 	t.GET("", post.Timeline)
 
-	p := r.Group("/post")
-	p.POST("/new", post.New)
-	p.GET("/self", post.SelfPosts)
+	p := r.Group("post")
+	p.POST("", post.New)
+	p.GET("", post.SelfPosts)
 
 }

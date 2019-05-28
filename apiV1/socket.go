@@ -19,12 +19,11 @@ func SocketConnect(c echo.Context) error {
 		}
 		user, err := usermodel.LoadByToken(token)
 		if err != nil {
-			logrus.Warning("failed load token from cache")
 			logrus.Error(err)
 			ws.Close()
 			return
 		}
-		logrus.Info(user.Username, " logged in success!!")
+		logrus.Info(user.Username, " socket connect successfully !")
 		socket := &usermodel.Socket{
 			ID:     user.ID,
 			Token:  token,
