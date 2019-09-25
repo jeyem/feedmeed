@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	mgo "gopkg.in/mgo.v2"
-
 	"github.com/boltdb/bolt"
+	"github.com/globalsign/mgo"
 	"github.com/jeyem/feedmeed/src/app/config"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"

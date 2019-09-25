@@ -1,10 +1,10 @@
 package v1
 
 import (
+	"github.com/globalsign/mgo/bson"
 	"github.com/jeyem/feedmeed/src/models/post"
 	"github.com/jeyem/feedmeed/src/models/user"
 	"github.com/labstack/echo"
-	"gopkg.in/mgo.v2/bson"
 )
 
 func newPost(c echo.Context) error {

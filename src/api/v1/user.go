@@ -3,7 +3,7 @@ package v1
 import (
 	"strconv"
 
-	"gopkg.in/mgo.v2/bson"
+	"github.com/globalsign/mgo/bson"
 
 	"github.com/jeyem/feedmeed/src/models/user"
 	"github.com/labstack/echo"
