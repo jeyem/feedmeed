@@ -1,7 +1,7 @@
-package postmodel
+package post
 
 import (
-	"github.com/jeyem/feedmeed/app"
+	"github.com/jeyem/feedmeed/src/app"
 )
 
 var (

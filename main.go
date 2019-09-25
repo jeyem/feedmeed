@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/jeyem/feedmeed/apiV1"
-	"github.com/jeyem/feedmeed/app"
-	"github.com/jeyem/feedmeed/app/config"
+	"github.com/jeyem/feedmeed/src/api/v1"
+	"github.com/jeyem/feedmeed/src/app"
+	"github.com/jeyem/feedmeed/src/app/config"
 )
 
 func main() {
 	a := app.New(config.DefaultConfig)
-	apiV1.Register(a)
+	v1.Register(a)
 	a.Run()
 }

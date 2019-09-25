@@ -1,4 +1,4 @@
-package usermodel
+package user
 
 const (
 	Online       = "online"

@@ -1,7 +1,7 @@
-package usermodel
+package user
 
 import (
-	"github.com/jeyem/feedmeed/app"
+	"github.com/jeyem/feedmeed/src/app"
 )
 
 var (
@@ -16,5 +16,4 @@ func Init(application *app.App) {
 
 	// sockets garbage collector
 	Connections.gc()
-	a.DB.LoadIndexes(&User{})
 }

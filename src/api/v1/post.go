@@ -1,24 +1,24 @@
-package post
+package v1
 
 import (
-	"github.com/jeyem/feedmeed/models/postmodel"
-	"github.com/jeyem/feedmeed/models/usermodel"
+	"github.com/jeyem/feedmeed/src/models/post"
+	"github.com/jeyem/feedmeed/src/models/user"
 	"github.com/labstack/echo"
 	"gopkg.in/mgo.v2/bson"
 )
 
-func New(c echo.Context) error {
-	f := new(form)
+func newPost(c echo.Context) error {
+	f := new(postform)
 	if err := c.Bind(f); err != nil {
 		return c.JSON(400, echo.Map{"error": err.Error()})
 	}
-	user, err := usermodel.LoadByRequest(c)
+	user, err := user.LoadByRequest(c)
 	if err != nil {
 		return c.JSON(400, echo.Map{
 			"error": err.Error(),
 		})
 	}
-	p, err := postmodel.New(user, f.Message)
+	p, err := post.New(user, f.Message)
 	if err != nil {
 		return c.JSON(400, echo.Map{"error": err.Error()})
 	}
@@ -28,8 +28,8 @@ func New(c echo.Context) error {
 	})
 }
 
-func Timeline(c echo.Context) error {
-	user, err := usermodel.LoadByRequest(c)
+func timeline(c echo.Context) error {
+	user, err := user.LoadByRequest(c)
 	if err != nil {
 		return c.JSON(400, echo.Map{
 			"error": err.Error(),
@@ -37,12 +37,12 @@ func Timeline(c echo.Context) error {
 	}
 	page := 1
 	limit := 100
-	timeline := postmodel.LoadTimeline(user.ID, page, limit)
+	timeline := post.LoadTimeline(user.ID, page, limit)
 
-	response := []echo.Map{}
+	response := []bson.M{}
 
-	for _, item := range timeline {
-		response = append(response, miniResponseTimeline(item))
+	for _, t := range timeline {
+		response = append(response, t.V1())
 	}
 
 	return c.JSON(200, bson.M{
@@ -52,8 +52,8 @@ func Timeline(c echo.Context) error {
 	})
 }
 
-func SelfPosts(c echo.Context) error {
-	user, err := usermodel.LoadByRequest(c)
+func selfPosts(c echo.Context) error {
+	user, err := user.LoadByRequest(c)
 	if err != nil {
 		return c.JSON(400, echo.Map{
 			"error": err.Error(),
@@ -63,10 +63,10 @@ func SelfPosts(c echo.Context) error {
 	page := 1
 	limit := 100
 
-	posts := postmodel.SelfPosts(user.ID, page, limit)
-	response := []echo.Map{}
+	posts := post.SelfPosts(user.ID, page, limit)
+	response := []bson.M{}
 	for _, p := range posts {
-		response = append(response, miniResponse(p))
+		response = append(response, p.V1())
 	}
 	return c.JSON(200, echo.Map{
 		"page":  page,

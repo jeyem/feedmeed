@@ -1,4 +1,4 @@
-package usermodel
+package user
 
 import (
 	"errors"
@@ -22,7 +22,34 @@ type User struct {
 	Created     time.Time     `bson:"created" json:"created"`
 }
 
-func (u User) DisplayName() string {
+func (*User) C() string {
+	return "user"
+}
+
+func (u *User) Collection() *mgo.Collection {
+	return a.DB.C(u.C())
+}
+
+func (u *User) Insert() error {
+	u.Created = time.Now()
+	return u.Collection().Insert(u)
+}
+
+func (u *User) Save() error {
+	return u.Insert()
+}
+
+func (u *User) V1() bson.M {
+	return bson.M{
+		"id":          u.ID.Hex(),
+		"username":    u.Username,
+		"displayName": u.DisplayName(),
+		"followers":   u.Followers,
+		"followings":  u.Followings,
+	}
+}
+
+func (u *User) DisplayName() string {
 	if u.Nikname != "" {
 		return u.Nikname
 	}
@@ -35,16 +62,8 @@ func (u *User) Meta() []mgo.Index {
 	}
 }
 
-func (u *User) Save() error {
-	if u.ID.Valid() {
-		return a.DB.Update(u)
-	}
-	u.Created = time.Now()
-	return a.DB.Create(u)
-}
-
 func (u *User) LoadByUsername(username string) error {
-	return a.DB.Find(bson.M{"username": username}).Load(u)
+	return u.Collection().Find(bson.M{"username": username}).One(u)
 }
 
 func (u *User) AuthByUsername(username, password string) error {
@@ -93,7 +112,8 @@ func (u *User) Follow(target *User) error {
 }
 
 func (u *User) StreamFollowersObjs() *mgo.Iter {
-	return a.DB.Collection(&Relation{}).Find(bson.M{
+	r := new(Relation)
+	return r.Collection().Find(bson.M{
 		"_following": u.ID,
 		"status":     follow,
 	}).Iter()
@@ -101,29 +121,31 @@ func (u *User) StreamFollowersObjs() *mgo.Iter {
 
 func (u *User) FollowersObjs(page, limit int) (users []User) {
 	relations := []Relation{}
-	a.DB.Find(bson.M{
+	r := new(Relation)
+	r.Collection().Find(bson.M{
 		"_following": u.ID,
 		"status":     follow,
-	}).Load(&relations)
+	}).All(&relations)
 	var ids []bson.ObjectId
 	for _, r := range relations {
 		ids = append(ids, r.Follower)
 	}
-	a.DB.Find(bson.M{"_id": bson.M{"$in": ids}}).Load(&users)
+	u.Collection().Find(bson.M{"_id": bson.M{"$in": ids}}).All(&users)
 	return users
 }
 
 func (u *User) FollowingsObjs(page, limit int) (users []User) {
 	relations := []Relation{}
-	a.DB.Find(bson.M{
+	r := new(Relation)
+	r.Collection().Find(bson.M{
 		"_follower": u.ID,
 		"status":    follow,
-	}).Load(&relations)
+	}).All(&relations)
 	var ids []bson.ObjectId
 	for _, r := range relations {
 		ids = append(ids, r.Following)
 	}
-	a.DB.Find(bson.M{"_id": bson.M{"$in": ids}}).Load(&users)
+	u.Collection().Find(bson.M{"_id": bson.M{"$in": ids}}).All(&users)
 	return users
 }
 
@@ -136,11 +158,13 @@ func Load(username string) (*User, error) {
 }
 
 func Query(q bson.M) (users []User) {
-	a.DB.Find(q).Load(&users)
+	u := new(User)
+	u.Collection().Find(q).All(&users)
 	return users
 }
 
 func Search(query string) (users []User) {
-	a.DB.Find(bson.M{"$text": bson.M{"$search": query}}).Load(&users)
+	u := new(User)
+	u.Collection().Find(bson.M{"$text": bson.M{"$search": query}}).All(&users)
 	return users
 }

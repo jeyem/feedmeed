@@ -1,13 +1,13 @@
-package apiV1
+package v1
 
 import (
-	"github.com/Sirupsen/logrus"
-	"github.com/jeyem/feedmeed/models/usermodel"
+	"github.com/jeyem/feedmeed/src/models/user"
 	"github.com/labstack/echo"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/net/websocket"
 )
 
-func SocketConnect(c echo.Context) error {
+func socket(c echo.Context) error {
 
 	var token string
 
@@ -17,20 +17,20 @@ func SocketConnect(c echo.Context) error {
 			ws.Close()
 			return
 		}
-		user, err := usermodel.LoadByToken(token)
+		u, err := user.LoadByToken(token)
 		if err != nil {
 			logrus.Error(err)
 			ws.Close()
 			return
 		}
-		logrus.Info(user.Username, " socket connect successfully !")
-		socket := &usermodel.Socket{
-			ID:     user.ID,
+		logrus.Info(u.Username, " socket connect successfully !")
+		socket := &user.Socket{
+			ID:     u.ID,
 			Token:  token,
-			Caster: make(chan *usermodel.BroadCaster, 8),
+			Caster: make(chan *user.BroadCaster, 8),
 		}
 
-		usermodel.Connections.New(socket)
+		user.Connections.New(socket)
 
 		for c := range socket.Caster {
 			websocket.Message.Send(ws, c.Message())

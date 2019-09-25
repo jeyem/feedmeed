@@ -1,10 +1,11 @@
-package usermodel
+package user
 
 import (
 	"time"
 
 	"github.com/labstack/echo"
 
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -16,13 +17,26 @@ type Session struct {
 	Created    time.Time     `bson:"created"`
 }
 
-func (s *Session) Save() error {
+func (*Session) C() string {
+	return "session"
+}
+
+func (s *Session) Collection() *mgo.Collection {
+	return a.DB.C(s.C())
+}
+
+func (s *Session) Insert() error {
 	s.Created = time.Now()
-	return a.DB.Create(s)
+	return s.Collection().Insert(s)
+}
+
+func (s *Session) Save() error {
+	return s.Insert()
 }
 
 func GetSessions(userID bson.ObjectId) (sessions []Session) {
-	a.DB.Find(bson.M{"_user": userID}).Load(&sessions)
+	s := new(Session)
+	s.Collection().Find(bson.M{"_user": userID}).All(&sessions)
 	return sessions
 }
 

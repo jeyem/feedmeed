@@ -6,16 +6,15 @@ import (
 
 	mgo "gopkg.in/mgo.v2"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
-	"github.com/jeyem/feedmeed/app/config"
-	"github.com/jeyem/mogo"
+	"github.com/jeyem/feedmeed/src/app/config"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/sirupsen/logrus"
 )
 
 type App struct {
-	DB     *mogo.DB
+	DB     *mgo.Database
 	MDB    *bolt.Tx
 	Config *config.Config
 	HTTP   *echo.Echo
@@ -51,14 +50,14 @@ func (a *App) memorydbConnection() *bolt.Tx {
 	return tx
 }
 
-func (a *App) dbConnection() *mogo.DB {
-	db, err := mogo.Conn(&mgo.DialInfo{
+func (a *App) dbConnection() *mgo.Database {
+	info := &mgo.DialInfo{
 		Addrs:    []string{fmt.Sprintf("%s:%d", a.Config.MongoHost, a.Config.MongoPort)},
 		Database: a.Config.MongoDB,
-	})
-
-	if err != nil {
-		logrus.Fatal(err)
 	}
-	return db
+	session, err := mgo.DialWithInfo(info)
+	if err != nil {
+		logrus.Fatal("mongo db ", err)
+	}
+	return session.DB(info.Database)
 }

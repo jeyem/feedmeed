@@ -1,18 +1,20 @@
-package user
+package v1
 
 import (
 	"strconv"
 
-	"github.com/jeyem/feedmeed/models/usermodel"
+	"gopkg.in/mgo.v2/bson"
+
+	"github.com/jeyem/feedmeed/src/models/user"
 	"github.com/labstack/echo"
 )
 
-func Follow(c echo.Context) error {
-	u, err := usermodel.LoadByRequest(c)
+func follow(c echo.Context) error {
+	u, err := user.LoadByRequest(c)
 	if err != nil {
 		return err
 	}
-	target := new(usermodel.User)
+	target := new(user.User)
 	if err := target.LoadByUsername(c.Param("target")); err != nil {
 		return c.JSON(400, echo.Map{
 			"error": err.Error(),
@@ -26,8 +28,8 @@ func Follow(c echo.Context) error {
 	return c.JSON(200, echo.Map{"message": "success"})
 }
 
-func FollowerList(c echo.Context) error {
-	u, err := usermodel.LoadByRequest(c)
+func followerList(c echo.Context) error {
+	u, err := user.LoadByRequest(c)
 	if err != nil {
 		return err
 	}
@@ -39,9 +41,9 @@ func FollowerList(c echo.Context) error {
 	}
 
 	followers := u.FollowersObjs(page, limit)
-	var response []echo.Map
+	var response = []bson.M{}
 	for _, f := range followers {
-		response = append(response, miniResponse(&f))
+		response = append(response, f.V1())
 	}
 	return c.JSON(200, echo.Map{
 		"followers": response,
@@ -50,8 +52,8 @@ func FollowerList(c echo.Context) error {
 	})
 }
 
-func FollowingList(c echo.Context) error {
-	u, err := usermodel.LoadByRequest(c)
+func followingList(c echo.Context) error {
+	u, err := user.LoadByRequest(c)
 	if err != nil {
 		return err
 	}
@@ -63,9 +65,9 @@ func FollowingList(c echo.Context) error {
 	}
 
 	followings := u.FollowingsObjs(page, limit)
-	var response []echo.Map
+	var response = []bson.M{}
 	for _, f := range followings {
-		response = append(response, miniResponse(&f))
+		response = append(response, f.V1())
 	}
 	return c.JSON(200, echo.Map{
 		"followings": response,
@@ -74,12 +76,10 @@ func FollowingList(c echo.Context) error {
 	})
 }
 
-func CurrentUser(c echo.Context) error {
-	u, err := usermodel.LoadByRequest(c)
+func currentUser(c echo.Context) error {
+	u, err := user.LoadByRequest(c)
 	if err != nil {
 		return err
 	}
-	return c.JSON(200, echo.Map{
-		"user": miniResponse(u),
-	})
+	return c.JSON(200, u.V1())
 }

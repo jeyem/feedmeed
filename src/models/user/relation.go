@@ -1,8 +1,9 @@
-package usermodel
+package user
 
 import (
 	"time"
 
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -14,7 +15,19 @@ type Relation struct {
 	Created   time.Time     `bson:"created"`
 }
 
-func (r *Relation) Save() error {
+func (*Relation) C() string {
+	return "relation"
+}
+
+func (r *Relation) Collection() *mgo.Collection {
+	return a.DB.C(r.C())
+}
+
+func (r *Relation) Insert() error {
 	r.Created = time.Now()
-	return a.DB.Create(r)
+	return r.Collection().Insert(r)
+}
+
+func (r *Relation) Save() error {
+	return r.Insert()
 }
