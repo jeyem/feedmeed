@@ -24,6 +24,7 @@ func (r *Relation) Collection() *mgo.Collection {
 }
 
 func (r *Relation) Insert() error {
+	r.ID = bson.NewObjectId()
 	r.Created = time.Now()
 	return r.Collection().Insert(r)
 }

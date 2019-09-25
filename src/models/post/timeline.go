@@ -5,6 +5,7 @@ import (
 
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
+
 	"github.com/jeyem/feedmeed/src/models/user"
 	"github.com/sirupsen/logrus"
 )
@@ -26,6 +27,7 @@ func (t *Timeline) Collection() *mgo.Collection {
 }
 
 func (t *Timeline) Insert() error {
+	t.ID = bson.NewObjectId()
 	t.Created = time.Now()
 	return t.Collection().Insert(t)
 }

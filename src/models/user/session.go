@@ -26,6 +26,7 @@ func (s *Session) Collection() *mgo.Collection {
 }
 
 func (s *Session) Insert() error {
+	s.ID = bson.NewObjectId()
 	s.Created = time.Now()
 	return s.Collection().Insert(s)
 }

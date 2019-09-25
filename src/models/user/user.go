@@ -31,6 +31,7 @@ func (u *User) Collection() *mgo.Collection {
 }
 
 func (u *User) Insert() error {
+	u.ID = bson.NewObjectId()
 	u.Created = time.Now()
 	return u.Collection().Insert(u)
 }

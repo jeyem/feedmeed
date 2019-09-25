@@ -1,6 +1,7 @@
 package post
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/jeyem/feedmeed/src/models/user"
@@ -26,6 +27,7 @@ func (p *Post) Collection() *mgo.Collection {
 }
 
 func (p *Post) Insert() error {
+	p.ID = bson.NewObjectId()
 	p.Created = time.Now()
 	return p.Collection().Insert(p)
 }
@@ -45,6 +47,7 @@ func (p *Post) V1() bson.M {
 
 func New(sender *user.User, message string) (*Post, error) {
 	p := new(Post)
+	fmt.Println(sender.ID.Hex())
 	p.Sender = sender.ID
 	p.Message = message
 	p.Tags = TagsParser(message)

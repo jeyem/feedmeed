@@ -20,7 +20,7 @@ func newPost(c echo.Context) error {
 	}
 	p, err := post.New(user, f.Message)
 	if err != nil {
-		return c.JSON(400, echo.Map{"error": err.Error()})
+		return c.JSON(500, echo.Map{"error": err.Error()})
 	}
 	return c.JSON(200, echo.Map{
 		"message": "post successfully",

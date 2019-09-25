@@ -38,7 +38,7 @@ func (a *App) Run() {
 }
 
 func (a *App) memorydbConnection() *bolt.Tx {
-	db, err := bolt.Open("my.db", 0600, nil)
+	db, err := bolt.Open(a.Config.BoltDB, 0600, nil)
 	if err != nil {
 		logrus.Fatal(err)
 	}
